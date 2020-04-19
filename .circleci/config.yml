@@ -3,7 +3,7 @@ jobs:
 
   # If you want to deploy your container to Docker Hub, you must
   # define environment variables in the CircleCI web interface for your project
-  #  1. define the CONTAINER_NAME environment variable for the project
+  #  1. define the DOCKER_REPO and DOCKER_IMAGE_NAME environment variables for the project
   #     Specifically, this is the name of the Docker Hub <ORG>/<NAME> to push
   #     If not defined, will use the repository that is being built from.
   #     to in the case that you have provided Docker credentials.
@@ -76,12 +76,17 @@ jobs:
                 then
                     DOCKER_TAG=$(echo "${CIRCLE_SHA1}" | cut -c1-10)
             fi
-            # If not set, define CONTAINER_NAME
-            if [ ! -n "${CONTAINER_NAME:-}" ]
+            # If not set, define DOCKER_IMAGE_NAME
+            if [ ! -n "${DOCKER_IMAGE_NAME:-}" ]
                 then
-                    CONTAINER_NAME="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+                    DOCKER_IMAGE_NAME="${CIRCLE_PROJECT_REPONAME}"
             fi
-            echo "Container name is ${CONTAINER_NAME}"
+            if [ ! -n "${DOCKER_REPO:-}" ]
+                then
+                    DOCKER_REPO="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            fi
+
+            echo "Docker Image name is ${DOCKER_IMAGE_NAME}"
             # If not set, define REPO_NAME
             if [ ! -n "${REPO_NAME:-}" ]
                 then
@@ -94,10 +99,10 @@ jobs:
             fi
             echo "2. Running jupyter-repo2docker..."
             set -x
-            if docker pull "${CONTAINER_NAME}:${DOCKER_TAG}"; then
-              jupyter-repo2docker --debug --user-name jovyan --user-id 1000 --no-run --image-name "${CONTAINER_NAME}:${DOCKER_TAG}" --cache-from "${CONTAINER_NAME}:${DOCKER_TAG}" "${REPO_NAME}"
+            if docker pull "${DOCKER_REPO}:${DOCKER_TAG}"; then
+              jupyter-repo2docker --debug --user-name jovyan --user-id 1000 --no-run --image-name "${DOCKER_IMAGE_NAME}" --cache-from "${DOCKER_REPO}:${DOCKER_TAG}" "${REPO_NAME}"
             else
-              jupyter-repo2docker --debug --user-name jovyan --user-id 1000 --no-run --image-name "${CONTAINER_NAME}:${DOCKER_TAG}" "${REPO_NAME}"
+              jupyter-repo2docker --debug --user-name jovyan --user-id 1000 --no-run --image-name "${DOCKER_IMAGE_NAME}:${DOCKER_TAG}" "${REPO_NAME}"
             fi
             docker ps
             docker images
@@ -110,15 +115,15 @@ jobs:
                 then
                     DOCKER_TAG=$(echo "${CIRCLE_SHA1}" | cut -c1-10)
             fi
-            # If not set, define CONTAINER_NAME
-            if [ ! -n "${CONTAINER_NAME:-}" ]
+            # If not set, define DOCKER_IMAGE_NAME
+            if [ ! -n "${DOCKER_IMAGE_NAME:-}" ]
                 then
-                    CONTAINER_NAME="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+                    DOCKER_IMAGE_NAME="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             fi
-            echo "Saving ${CONTAINER_NAME}:${DOCKER_TAG} to container.tar.gz"
+            echo "Saving ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} to container.tar.gz"
             mkdir -p /tmp/cache
-            docker save ${CONTAINER_NAME}:${DOCKER_TAG} \
-              $(docker history -q ${CONTAINER_NAME}:${DOCKER_TAG} | tr -d '<missing>') \
+            docker save ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} \
+              $(docker history -q ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} | tr -d '<missing>') \
               | pigz -2 -p 3 > /tmp/cache/container.tar.gz
       - persist_to_workspace:
           root: /tmp
@@ -167,15 +172,20 @@ jobs:
                 then
                     DOCKER_TAG=$(echo "${CIRCLE_SHA1}" | cut -c1-10)
             fi
-            # If not set, define CONTAINER_NAME
-            if [[ ! -n "${CONTAINER_NAME:-}" ]]
+            # If not set, define DOCKER_IMAGE_NAME
+            if [ ! -n "${DOCKER_IMAGE_NAME:-}" ]
                 then
-                    CONTAINER_NAME="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+                    DOCKER_IMAGE_NAME="${CIRCLE_PROJECT_REPONAME}"
             fi
-            echo "Container name set to ${CONTAINER_NAME}:${DOCKER_TAG}"
+            if [ ! -n "${DOCKER_REPO:-}" ]
+                then
+                    DOCKER_REPO="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            fi
+            echo "Container name set to ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
             if [[ -n "$DOCKER_PASS" ]]; then
                   docker login -u $DOCKER_USER -p $DOCKER_PASS
-                  docker push ${CONTAINER_NAME}:${DOCKER_TAG}
+                  docker tag "${DOCKER_IMAGE_NAME}:${DOCKER_TAG}" "${DOCKER_REPO}:${DOCKER_TAG}"
+                  docker push ${DOCKER_IMAGE_NAME}:${DOCKER_TAG}
             fi
 workflows:
   version: 2
