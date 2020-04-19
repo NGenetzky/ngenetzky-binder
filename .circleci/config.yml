@@ -30,6 +30,8 @@ jobs:
   build:
     environment:
       - TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+      - DOCKER_IMAGE_NAME: "binder"
+      - DOCKER_REPO: "ngenetzky/binder"
     docker:
       - image: docker:18.01.0-ce-git
     working_directory: /tmp/src
@@ -148,6 +150,9 @@ jobs:
     machine:
       image: circleci/classic:201711-01
     working_directory: /tmp/src
+    environment:
+      - DOCKER_IMAGE_NAME: "binder"
+      - DOCKER_REPO: "ngenetzky/binder"
     steps:
       - attach_workspace:
           at: /tmp
