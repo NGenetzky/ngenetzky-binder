@@ -19,6 +19,7 @@ jobs:
   setup:
     environment:
       - TZ: "/usr/share/zoneinfo/America/Los_Angeles"
+      - CONTAINER_NAME: "ngenetzky/binder"
     docker:
       - image: docker:18.01.0-ce-git
       - image: circleci/python:3.6.1
