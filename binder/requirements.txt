@@ -1,0 +1,11 @@
+pre-commit
+virtualenvwrapper
+datalad
+autopep8
+cookiecutter
+
+jupyter-repo2docker
+jupytext
+papermill
+ptpython
+tmuxp
