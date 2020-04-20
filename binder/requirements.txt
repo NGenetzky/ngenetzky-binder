@@ -9,3 +9,5 @@ jupytext
 papermill
 ptpython
 tmuxp
+
+organize-tool
